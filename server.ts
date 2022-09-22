@@ -69,19 +69,20 @@ app.use(morgan("tiny"));
 const MODE = process.env.NODE_ENV;
 const BUILD_DIR = path.join(process.cwd(), "build");
 
+const sentryRequestHandler =
+  wrapExpressCreateRequestHandler(createRequestHandler);
+
 app.all(
   "*",
   MODE === "production"
-    ? wrapExpressCreateRequestHandler(
-        createRequestHandler({ build: require(BUILD_DIR) }) as any
-      )
+    ? sentryRequestHandler({ build: require(BUILD_DIR) })
     : (...args) => {
         purgeRequireCache();
-        const requestHandler = createRequestHandler({
+        const requestHandler = sentryRequestHandler({
           build: require(BUILD_DIR),
           mode: MODE,
         });
-        return wrapExpressCreateRequestHandler(requestHandler(...args) as any);
+        return requestHandler(...args);
       }
 );
 
